@@ -1,0 +1,256 @@
+
+/* ===================================
+   1. CONFIGURACIÓN GENERAL
+=================================== */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f2f5f3;
+    color: #26352e;
+    padding: 30px 15px;
+}
+
+/* ===================================
+   2. ENCABEZADO
+=================================== */
+
+header {
+    background-color: #173f32;
+    color: white;
+    text-align: center;
+    padding: 30px 15px;
+    border-radius: 12px;
+    max-width: 1100px;
+    margin: 0 auto 25px;
+}
+
+header h1 {
+    margin-bottom: 8px;
+}
+
+/* ===================================
+   3. FORMULARIO
+=================================== */
+
+.formulario {
+    background-color: white;
+    max-width: 1100px;
+    margin: auto;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.07);
+}
+
+.formulario h2 {
+    margin-bottom: 25px;
+    color: #173f32;
+}
+
+label {
+    display: block;
+    margin: 16px 0 7px;
+    font-weight: bold;
+}
+
+input,
+select {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ccd5cf;
+    border-radius: 7px;
+    font-size: 15px;
+    background-color: white;
+}
+
+input:focus,
+select:focus {
+    outline: none;
+    border-color: #23845b;
+    box-shadow: 0 0 0 2px rgba(35, 132, 91, 0.12);
+}
+
+/* ===================================
+   4. SECCIONES DE PRODUCCIÓN
+=================================== */
+
+#seccionArmado,
+#seccionCorte {
+    margin-top: 25px;
+    padding: 20px;
+    background-color: #f5f8f6;
+    border-radius: 9px;
+}
+
+h3 {
+    color: #23734e;
+    margin-bottom: 10px;
+}
+
+/* ===================================
+   5. BOTONES GENERALES
+=================================== */
+
+button {
+    width: 100%;
+    margin-top: 25px;
+    padding: 14px;
+    background-color: #20744c;
+    color: white;
+    border: none;
+    border-radius: 7px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+button:hover {
+    background-color: #155b39;
+}
+
+/* ===================================
+   6. RESUMEN DE LIQUIDACIÓN
+=================================== */
+
+.resumen {
+    margin-top: 25px;
+    padding: 20px;
+    background-color: #edf5ef;
+    border-radius: 10px;
+    border: 1px solid #c9dfce;
+}
+
+.resumen h3 {
+    margin-bottom: 15px;
+}
+
+.resumen p {
+    margin: 12px 0;
+    display: flex;
+    justify-content: space-between;
+}
+
+.resumen hr {
+    border: 0;
+    border-top: 1px solid #c9dfce;
+    margin: 15px 0;
+}
+
+.resumen h2 {
+    color: #20744c;
+    font-size: 20px;
+}
+
+/* ===================================
+   7. HISTORIAL DE PRODUCCIÓN
+=================================== */
+
+.historial {
+    background-color: white;
+    max-width: 1100px;
+    margin: 25px auto;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.07);
+}
+
+.historial h2 {
+    color: #173f32;
+    margin-bottom: 20px;
+}
+
+/* Contenedor con desplazamiento horizontal */
+
+.tabla-contenedor {
+    width: 100%;
+    overflow-x: auto;
+}
+
+/* Tabla */
+
+table {
+    width: 100%;
+    min-width: 900px;
+    border-collapse: collapse;
+    table-layout: auto;
+}
+
+/* Encabezados y celdas */
+
+th,
+td {
+    padding: 16px 14px;
+    text-align: left;
+    border-bottom: 1px solid #e0e7e2;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
+th {
+    background-color: #edf5ef;
+    color: #173f32;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+td {
+    font-size: 15px;
+    color: #26352e;
+}
+
+/* Fecha */
+
+.historial th:first-child,
+.historial td:first-child {
+    min-width: 110px;
+}
+
+/* Detalle de producción */
+
+.historial td:last-child {
+    min-width: 190px;
+}
+
+/* ===================================
+   8. BOTÓN DE APROBACIÓN
+=================================== */
+
+.historial td button {
+    width: auto;
+    min-width: 85px;
+    margin: 0;
+    padding: 10px 15px;
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+/* ===================================
+   9. ADAPTACIÓN A CELULARES
+=================================== */
+
+@media (max-width: 600px) {
+
+    body {
+        padding: 15px 10px;
+    }
+
+    .formulario,
+    .historial {
+        padding: 20px;
+    }
+
+    header h1 {
+        font-size: 23px;
+    }
+
+    .resumen h2 {
+        font-size: 18px;
+    }
+
+}

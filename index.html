@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Control de Producción</title>
+
+    <link rel="stylesheet" href="css/estilos.css">
+</head>
+
+<body>
+
+    <header>
+        <h1>Control de Producción</h1>
+        <p>Registro y liquidación de bases cama</p>
+    </header>
+
+    <main>
+
+        <section class="formulario">
+
+            <h2>Registro de producción</h2>
+
+            <form id="formProduccion">
+
+                <label for="fecha">Fecha de producción</label>
+                <input type="date" id="fecha" required>
+
+                <label for="trabajador">Nombre del trabajador</label>
+                <input type="text" id="trabajador" placeholder="Escribe el nombre" required>
+
+                <label for="actividad">Actividad realizada</label>
+                <select id="actividad" required>
+                    <option value="">Seleccionar actividad</option>
+                    <option value="armado">Solo armado</option>
+                    <option value="corte">Solo corte</option>
+                    <option value="ambos">Armado y corte</option>
+                </select>
+
+                <div id="seccionArmado">
+                    <h3>Producción de armado</h3>
+
+                    <label for="referencia">Referencia</label>
+                    <select id="referencia">
+                        <option value="">Seleccionar referencia</option>
+                    </select>
+
+                    <label for="cantidadArmado">Cantidad armada</label>
+                    <input type="number" id="cantidadArmado" min="0">
+                </div>
+
+                <div id="seccionCorte">
+                    <h3>Producción de corte</h3>
+
+                    <label for="tipoCorte">Tipo de corte</label>
+                    <select id="tipoCorte">
+                        <option value="">Seleccionar tipo</option>
+                        <option value="entero">Corte entero</option>
+                        <option value="dividido">Corte dividido</option>
+                    </select>
+
+                    <label for="cantidadCorte">Cantidad cortada</label>
+                    <input type="number" id="cantidadCorte" min="0">
+                </div>
+
+                <div id="resumen" class="resumen">
+
+                    <h3>Resumen de producción</h3>
+
+                    <p>Subtotal armado:
+                        <strong id="totalArmado">$0</strong>
+                    </p>
+
+                    <p>Subtotal corte:
+                        <strong id="totalCorte">$0</strong>
+                    </p>
+
+                    <hr>
+
+                    <h2>
+                        Total a pagar:
+                        <span id="totalGeneral">$0</span>
+                    </h2>
+
+                </div>
+
+
+                <button type="submit">
+                    Registrar producción
+                </button>
+
+            </form>
+
+        </section>
+
+        <section class="historial">
+
+            <h2>Historial de producción</h2>
+
+            <div class="tabla-contenedor">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Trabajador</th>
+                            <th>Actividad</th>
+                            <th>Total a pagar</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                            <th>Detalle de producción</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="tablaHistorial">
+                        <!-- Aquí aparecerán los registros -->
+                    </tbody>
+                </table>
+            </div>
+
+        </section>
+
+    </main>
+
+    <script src="js/app.js"></script>
+
+</body>
+
+</html>

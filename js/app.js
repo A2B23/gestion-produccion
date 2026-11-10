@@ -1,34 +1,35 @@
 
+const URL_API = "https://script.google.com/macros/s/AKfycbxWdSJW441Nd9ghs4D6Sv_fPWPFmD_ssXob_cpRA3268EIUMsXe7j-HVZpGbyKS9DJF/exec";
+
 // ===================================
 // 1. ELEMENTOS DEL FORMULARIO
 // ===================================
 
 const actividad = document.getElementById("actividad");
-
 const seccionArmado = document.getElementById("seccionArmado");
 const seccionCorte = document.getElementById("seccionCorte");
-
 const referencia = document.getElementById("referencia");
-
 const cantidadArmado = document.getElementById("cantidadArmado");
 const tipoCorte = document.getElementById("tipoCorte");
 const cantidadCorte = document.getElementById("cantidadCorte");
-
 const fecha = document.getElementById("fecha");
+const formulario = document.getElementById("formProduccion");
 
+let registros = [];
 
 // ===================================
 // 2. FECHA ACTUAL
 // ===================================
 
-const hoy = new Date();
+function establecerFechaActual() {
+    const hoy = new Date();
 
-const fechaActual = new Date(
-    hoy.getTime() - hoy.getTimezoneOffset() * 60000
-).toISOString().split("T")[0];
+    fecha.value = new Date(
+        hoy.getTime() - hoy.getTimezoneOffset() * 60000
+    ).toISOString().split("T")[0];
+}
 
-fecha.value = fechaActual;
-
+establecerFechaActual();
 
 // ===================================
 // 3. REFERENCIAS DE ARMADO
@@ -49,108 +50,67 @@ const referencias = [
     { nombre: "160 DIVIDIDA × 17", precio: 7000 }
 ];
 
-referencias.forEach(function (item) {
-
+referencias.forEach(item => {
     const opcion = document.createElement("option");
-
     opcion.value = item.nombre;
     opcion.textContent = item.nombre;
-
     referencia.appendChild(opcion);
-
 });
 
-
 // ===================================
-// 4. MOSTRAR LAS SECCIONES
+// 4. MOSTRAR SECCIONES
 // ===================================
 
 function mostrarSecciones() {
-
     const seleccion = actividad.value;
 
-    seccionArmado.style.display = "none";
-    seccionCorte.style.display = "none";
+    seccionArmado.style.display =
+        seleccion === "armado" || seleccion === "ambos"
+            ? "block" : "none";
 
-    if (seleccion === "armado") {
-
-        seccionArmado.style.display = "block";
-
-    } else if (seleccion === "corte") {
-
-        seccionCorte.style.display = "block";
-
-    } else if (seleccion === "ambos") {
-
-        seccionArmado.style.display = "block";
-        seccionCorte.style.display = "block";
-
-    }
-
+    seccionCorte.style.display =
+        seleccion === "corte" || seleccion === "ambos"
+            ? "block" : "none";
 }
 
-
-// ===================================
-// 5. ESCUCHAR CAMBIOS
-// ===================================
-
 actividad.addEventListener("change", mostrarSecciones);
-
-
-// ===================================
-// 6. ESTADO INICIAL
-// ===================================
-
 mostrarSecciones();
 
-
 // ===================================
-// 7. FORMATO DE DINERO
+// 5. FORMATO DE DINERO
 // ===================================
 
 function formatoDinero(valor) {
-
     return new Intl.NumberFormat("es-CO", {
         style: "currency",
         currency: "COP",
         maximumFractionDigits: 0
     }).format(valor);
-
 }
 
-
 // ===================================
-// 8. CALCULAR LA PRODUCCIÓN
+// 6. CALCULAR PRODUCCIÓN
 // ===================================
 
 function calcularProduccion() {
-
     let totalArmado = 0;
     let totalCorte = 0;
 
     const seleccion = actividad.value;
 
-    // CALCULAR ARMADO
-
     if (seleccion === "armado" || seleccion === "ambos") {
-
-        const producto = referencias.find(function (item) {
-            return item.nombre === referencia.value;
-        });
+        const producto = referencias.find(
+            item => item.nombre === referencia.value
+        );
 
         const cantidad = Number(cantidadArmado.value) || 0;
 
         if (producto && cantidad > 0) {
-
             totalArmado = producto.precio * cantidad;
-
         }
     }
 
-    // CALCULAR CORTE
-
     if (seleccion === "corte" || seleccion === "ambos") {
-
         const cantidad = Number(cantidadCorte.value) || 0;
 
         let precioCorte = 0;
@@ -164,14 +124,9 @@ function calcularProduccion() {
         }
 
         totalCorte = precioCorte * cantidad;
-
     }
 
-    // CALCULAR TOTAL GENERAL
-
     const totalGeneral = totalArmado + totalCorte;
-
-    // MOSTRAR RESULTADOS
 
     document.getElementById("totalArmado").textContent =
         formatoDinero(totalArmado);
@@ -181,77 +136,112 @@ function calcularProduccion() {
 
     document.getElementById("totalGeneral").textContent =
         formatoDinero(totalGeneral);
-
 }
 
-
-// ===================================
-// 9. ACTUALIZAR AUTOMÁTICAMENTE
-// ===================================
-
 actividad.addEventListener("change", calcularProduccion);
-
 referencia.addEventListener("change", calcularProduccion);
-
 cantidadArmado.addEventListener("input", calcularProduccion);
-
 tipoCorte.addEventListener("change", calcularProduccion);
-
 cantidadCorte.addEventListener("input", calcularProduccion);
-
-
-// CÁLCULO INICIAL
 
 calcularProduccion();
 
-
-
 // ===================================
-// 10. GUARDAR REGISTROS
+// 7. CONSULTAR GOOGLE SHEETS
 // ===================================
 
-// Recuperar registros guardados en el navegador
-let registros = JSON.parse(
-    localStorage.getItem("produccion") || "[]"
-);
+async function cargarRegistros() {
+    const tabla = document.getElementById("tablaHistorial");
 
+    tabla.innerHTML = `
+        <tr>
+            <td colspan="7">Consultando producción en la nube...</td>
+        </tr>
+    `;
 
-// Escuchar el envío del formulario
-const formulario = document.getElementById("formProduccion");
+    try {
+        const respuesta = await fetch(URL_API);
+        const datos = await respuesta.json();
 
-formulario.addEventListener("submit", function (event) {
+        if (datos.estado !== "correcto") {
+            throw new Error(
+                datos.mensaje || "No se pudieron consultar los registros."
+            );
+        }
 
-    // Evitar que la página se recargue
+        registros = datos.registros.map(registro => ({
+            id: registro.ID,
+            fecha: registro.FECHA,
+            trabajador: registro.TRABAJADOR,
+            actividad: registro.ACTIVIDAD,
+            referencia: registro.REFERENCIA,
+            cantidadArmado: Number(registro.CANTIDAD_ARMADO) || 0,
+            tipoCorte: registro.TIPO_CORTE,
+            cantidadCorte: Number(registro.CANTIDAD_CORTE) || 0,
+            total: Number(registro.TOTAL) || 0,
+            estado: registro.ESTADO || "Pendiente"
+        }));
+
+        mostrarHistorial();
+
+    } catch (error) {
+        console.error("Error al consultar Google Sheets:", error);
+
+        tabla.innerHTML = `
+            <tr>
+                <td colspan="7">
+                    No se pudo consultar la nube. Revisa tu conexión
+                    y la consola del navegador.
+                </td>
+            </tr>
+        `;
+    }
+}
+
+// ===================================
+// 8. ENVIAR DATOS A GOOGLE SHEETS
+// ===================================
+
+async function enviarDatos(datos) {
+    return fetch(URL_API, {
+        method: "POST",
+        mode: "no-cors",
+        headers: {
+            "Content-Type": "text/plain;charset=utf-8"
+        },
+        body: JSON.stringify(datos)
+    });
+}
+
+// ===================================
+// 9. REGISTRAR PRODUCCIÓN
+// ===================================
+
+formulario.addEventListener("submit", async function(event) {
     event.preventDefault();
 
-    // Obtener los datos principales
     const nombreTrabajador = document
         .getElementById("trabajador")
         .value.trim();
 
     const seleccion = actividad.value;
 
-    // VALIDAR FECHA
     if (!fecha.value) {
         alert("Debes seleccionar una fecha.");
         return;
     }
 
-    // VALIDAR NOMBRE
     if (nombreTrabajador === "") {
         alert("Debes escribir el nombre del trabajador.");
         return;
     }
 
-    // VALIDAR ACTIVIDAD
     if (!seleccion) {
         alert("Debes seleccionar una actividad.");
         return;
     }
 
-    // VALIDAR ARMADO
     if (seleccion === "armado" || seleccion === "ambos") {
-
         if (!referencia.value) {
             alert("Debes seleccionar una referencia de armado.");
             return;
@@ -263,9 +253,7 @@ formulario.addEventListener("submit", function (event) {
         }
     }
 
-    // VALIDAR CORTE
     if (seleccion === "corte" || seleccion === "ambos") {
-
         if (!tipoCorte.value) {
             alert("Debes seleccionar el tipo de corte.");
             return;
@@ -277,67 +265,71 @@ formulario.addEventListener("submit", function (event) {
         }
     }
 
-    // CREAR REGISTRO
     const nuevoRegistro = {
         fecha: fecha.value,
         trabajador: nombreTrabajador,
         actividad: seleccion,
-
-        // Datos de armado
         referencia: referencia.value,
         cantidadArmado: Number(cantidadArmado.value) || 0,
-
-        // Datos de corte
         tipoCorte: tipoCorte.value,
         cantidadCorte: Number(cantidadCorte.value) || 0,
-
-        // Liquidación
         total: Number(
             document.getElementById("totalGeneral").textContent
                 .replace(/\D/g, "")
-        ),
-
-        // Estado de revisión
-        estado: "Pendiente"
+        )
     };
 
-    // GUARDAR REGISTRO
-    registros.push(nuevoRegistro);
+    const boton = formulario.querySelector('[type="submit"]');
 
-    localStorage.setItem(
-        "produccion",
-        JSON.stringify(registros)
-    );
+    try {
+        boton.disabled = true;
+        boton.textContent = "Enviando...";
 
-    // ACTUALIZAR HISTORIAL
-    mostrarHistorial();
+        await enviarDatos(nuevoRegistro);
 
-    // CONFIRMAR
-    alert("¡Producción registrada correctamente!");
+        alert(
+            "Solicitud enviada. Vamos a consultar Google Sheets para verificar el registro."
+        );
 
+        formulario.reset();
+        establecerFechaActual();
+
+        mostrarSecciones();
+        calcularProduccion();
+
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        await cargarRegistros();
+
+    } catch (error) {
+        console.error("Error al enviar producción:", error);
+        alert("No se pudo enviar la producción. Revisa tu conexión.");
+    } finally {
+        boton.disabled = false;
+        boton.textContent = "Registrar producción";
+    }
 });
-// ===================================
-// 11. MOSTRAR HISTORIAL
-// ===================================
 
 // ===================================
-// 11. MOSTRAR HISTORIAL
+// 10. MOSTRAR HISTORIAL
 // ===================================
 
 function mostrarHistorial() {
-
     const tabla = document.getElementById("tablaHistorial");
 
     tabla.innerHTML = "";
 
-    registros.forEach(function (registro, indice) {
+    if (registros.length === 0) {
+        tabla.innerHTML = `
+            <tr>
+                <td colspan="7">Todavía no hay registros de producción.</td>
+            </tr>
+        `;
+        return;
+    }
 
+    registros.forEach(function(registro) {
         const fila = document.createElement("tr");
 
-        // Compatibilidad con registros antiguos
-        const estado = registro.estado || "Pendiente";
-
-        // Crear celdas
         const celdaFecha = document.createElement("td");
         celdaFecha.textContent = registro.fecha;
 
@@ -346,9 +338,9 @@ function mostrarHistorial() {
 
         const celdaActividad = document.createElement("td");
         celdaActividad.textContent = registro.actividad;
-        const celdaDetalle = document.createElement("td");
 
-        let detalle = [];
+        const celdaDetalle = document.createElement("td");
+        const detalle = [];
 
         if (registro.cantidadArmado > 0) {
             detalle.push(
@@ -362,60 +354,51 @@ function mostrarHistorial() {
             );
         }
 
-        celdaDetalle.textContent = detalle.join(" | ") || "Sin detalle";
+        celdaDetalle.textContent =
+            detalle.join(" | ") || "Sin detalle";
 
         const celdaTotal = document.createElement("td");
         celdaTotal.textContent = formatoDinero(registro.total);
 
         const celdaEstado = document.createElement("td");
-        celdaEstado.textContent = estado;
+        celdaEstado.textContent = registro.estado;
 
         const celdaAcciones = document.createElement("td");
 
-        // Botón para aprobar
-        if (estado === "Pendiente") {
-
+        if (registro.estado === "Pendiente") {
             const botonAprobar = document.createElement("button");
 
             botonAprobar.textContent = "Aprobar";
-
             botonAprobar.type = "button";
 
-            botonAprobar.addEventListener("click", function () {
-
-                aprobarRegistro(indice);
-
+            botonAprobar.addEventListener("click", function() {
+                aprobarRegistro(registro.id);
             });
 
             celdaAcciones.appendChild(botonAprobar);
-
         } else {
-
             celdaAcciones.textContent = "Revisado";
-
         }
 
-        // Agregar celdas a la fila
-        fila.appendChild(celdaFecha);
-        fila.appendChild(celdaTrabajador);
-        fila.appendChild(celdaActividad);
-        fila.appendChild(celdaTotal);
-        fila.appendChild(celdaEstado);
-        fila.appendChild(celdaAcciones);
-        fila.appendChild(celdaDetalle);
+        fila.append(
+            celdaFecha,
+            celdaTrabajador,
+            celdaActividad,
+            celdaDetalle,
+            celdaTotal,
+            celdaEstado,
+            celdaAcciones
+        );
 
         tabla.appendChild(fila);
-
     });
-
 }
 
 // ===================================
-// 12. APROBAR REGISTRO
+// 11. APROBAR REGISTRO EN LA NUBE
 // ===================================
 
-function aprobarRegistro(indice) {
-
+async function aprobarRegistro(id) {
     const confirmar = confirm(
         "¿Estás seguro de aprobar esta producción?"
     );
@@ -424,15 +407,27 @@ function aprobarRegistro(indice) {
         return;
     }
 
-    registros[indice].estado = "Aprobado";
+    try {
+        await enviarDatos({
+            accion: "aprobar",
+            id: id
+        });
 
-    localStorage.setItem(
-        "produccion",
-        JSON.stringify(registros)
-    );
+        alert(
+            "Solicitud de aprobación enviada. Actualizaremos el historial."
+        );
 
-    mostrarHistorial();
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        await cargarRegistros();
 
-    alert("Producción aprobada correctamente.");
-
+    } catch (error) {
+        console.error("Error al aprobar:", error);
+        alert("No se pudo enviar la aprobación.");
+    }
 }
+
+// ===================================
+// 12. CARGA INICIAL
+// ===================================
+
+cargarRegistros();

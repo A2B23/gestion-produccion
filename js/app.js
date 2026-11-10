@@ -147,10 +147,10 @@ cantidadCorte.addEventListener("input", calcularProduccion);
 calcularProduccion();
 
 // ===================================
-// 7. CONSULTAR GOOGLE SHEETS
+// 7. CONSULTAR GOOGLE SHEETS (JSONP)
 // ===================================
 
-async function cargarRegistros() {
+function cargarRegistros() {
     const tabla = document.getElementById("tablaHistorial");
 
     tabla.innerHTML = `
@@ -159,43 +159,80 @@ async function cargarRegistros() {
         </tr>
     `;
 
-    try {
-        const respuesta = await fetch(URL_API);
-        const datos = await respuesta.json();
+    const nombreCallback = "recibirProduccion" + Date.now();
+    const script = document.createElement("script");
 
-        if (datos.estado !== "correcto") {
-            throw new Error(
-                datos.mensaje || "No se pudieron consultar los registros."
-            );
+    let temporizador;
+
+    window[nombreCallback] = function(datos) {
+        clearTimeout(temporizador);
+
+        try {
+            if (datos.estado !== "correcto") {
+                throw new Error(
+                    datos.mensaje || "No se pudieron consultar los registros."
+                );
+            }
+
+            registros = datos.registros.map(registro => ({
+                id: registro.ID,
+                fecha: registro.FECHA,
+                trabajador: registro.TRABAJADOR,
+                actividad: registro.ACTIVIDAD,
+                referencia: registro.REFERENCIA,
+                cantidadArmado: Number(registro.CANTIDAD_ARMADO) || 0,
+                tipoCorte: registro.TIPO_CORTE,
+                cantidadCorte: Number(registro.CANTIDAD_CORTE) || 0,
+                total: Number(registro.TOTAL) || 0,
+                estado: registro.ESTADO || "Pendiente"
+            }));
+
+            mostrarHistorial();
+
+        } catch (error) {
+            console.error("Error al procesar registros:", error);
+
+            tabla.innerHTML = `
+                <tr>
+                    <td colspan="7">Error al procesar los registros.</td>
+                </tr>
+            `;
+
+        } finally {
+            script.remove();
+            delete window[nombreCallback];
         }
+    };
 
-        registros = datos.registros.map(registro => ({
-            id: registro.ID,
-            fecha: registro.FECHA,
-            trabajador: registro.TRABAJADOR,
-            actividad: registro.ACTIVIDAD,
-            referencia: registro.REFERENCIA,
-            cantidadArmado: Number(registro.CANTIDAD_ARMADO) || 0,
-            tipoCorte: registro.TIPO_CORTE,
-            cantidadCorte: Number(registro.CANTIDAD_CORTE) || 0,
-            total: Number(registro.TOTAL) || 0,
-            estado: registro.ESTADO || "Pendiente"
-        }));
+    script.onerror = function() {
+        clearTimeout(temporizador);
 
-        mostrarHistorial();
-
-    } catch (error) {
-        console.error("Error al consultar Google Sheets:", error);
+        console.error("Error al conectar con Google Sheets.");
 
         tabla.innerHTML = `
             <tr>
-                <td colspan="7">
-                    No se pudo consultar la nube. Revisa tu conexión
-                    y la consola del navegador.
-                </td>
+                <td colspan="7">No se pudo consultar la nube.</td>
             </tr>
         `;
-    }
+
+        script.remove();
+        delete window[nombreCallback];
+    };
+
+    temporizador = setTimeout(() => {
+        script.remove();
+        delete window[nombreCallback];
+
+        tabla.innerHTML = `
+            <tr>
+                <td colspan="7">La consulta tardó demasiado. Intenta nuevamente.</td>
+            </tr>
+        `;
+    }, 15000);
+
+    script.src = URL_API + "?callback=" + nombreCallback;
+
+    document.body.appendChild(script);
 }
 
 // ===================================
@@ -203,7 +240,7 @@ async function cargarRegistros() {
 // ===================================
 
 async function enviarDatos(datos) {
-    return fetch(URL_API, {
+    const respuesta = await fetch(URL_API, {
         method: "POST",
         mode: "no-cors",
         headers: {
@@ -211,13 +248,15 @@ async function enviarDatos(datos) {
         },
         body: JSON.stringify(datos)
     });
+
+    return respuesta;
 }
 
 // ===================================
 // 9. REGISTRAR PRODUCCIÓN
 // ===================================
 
-formulario.addEventListener("submit", async function (event) {
+formulario.addEventListener("submit", async function(event) {
     event.preventDefault();
 
     const nombreTrabajador = document
@@ -279,6 +318,11 @@ formulario.addEventListener("submit", async function (event) {
         )
     };
 
+    if (nuevoRegistro.total <= 0) {
+        alert("El total de producción debe ser mayor que cero.");
+        return;
+    }
+
     const boton = formulario.querySelector('[type="submit"]');
 
     try {
@@ -302,7 +346,9 @@ formulario.addEventListener("submit", async function (event) {
 
     } catch (error) {
         console.error("Error al enviar producción:", error);
+
         alert("No se pudo enviar la producción. Revisa tu conexión.");
+
     } finally {
         boton.disabled = false;
         boton.textContent = "Registrar producción";
@@ -327,7 +373,7 @@ function mostrarHistorial() {
         return;
     }
 
-    registros.forEach(function (registro) {
+    registros.forEach(function(registro) {
         const fila = document.createElement("tr");
 
         const celdaFecha = document.createElement("td");
@@ -371,11 +417,12 @@ function mostrarHistorial() {
             botonAprobar.textContent = "Aprobar";
             botonAprobar.type = "button";
 
-            botonAprobar.addEventListener("click", function () {
+            botonAprobar.addEventListener("click", function() {
                 aprobarRegistro(registro.id);
             });
 
             celdaAcciones.appendChild(botonAprobar);
+
         } else {
             celdaAcciones.textContent = "Revisado";
         }
@@ -422,6 +469,7 @@ async function aprobarRegistro(id) {
 
     } catch (error) {
         console.error("Error al aprobar:", error);
+
         alert("No se pudo enviar la aprobación.");
     }
 }

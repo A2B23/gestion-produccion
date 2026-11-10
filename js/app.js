@@ -1,5 +1,5 @@
 
-const URL_API = "https://script.google.com/macros/s/AKfycbxWdSJW441Nd9ghs4D6Sv_fPWPFmD_ssXob_cpRA3268EIUMsXe7j-HVZpGbyKS9DJF/exec";
+const URL_API = "https://script.google.com/macros/s/AKfycbxub26FgcZStv-Wf6uD0jDwP0JNWrLzSUKRYcM6Y8cIVlcq0wG5gxmizBS4AdZTfz0u1g/exec";
 
 // ===================================
 // 1. ELEMENTOS DEL FORMULARIO
@@ -217,7 +217,7 @@ async function enviarDatos(datos) {
 // 9. REGISTRAR PRODUCCIÓN
 // ===================================
 
-formulario.addEventListener("submit", async function(event) {
+formulario.addEventListener("submit", async function (event) {
     event.preventDefault();
 
     const nombreTrabajador = document
@@ -327,7 +327,7 @@ function mostrarHistorial() {
         return;
     }
 
-    registros.forEach(function(registro) {
+    registros.forEach(function (registro) {
         const fila = document.createElement("tr");
 
         const celdaFecha = document.createElement("td");
@@ -371,7 +371,7 @@ function mostrarHistorial() {
             botonAprobar.textContent = "Aprobar";
             botonAprobar.type = "button";
 
-            botonAprobar.addEventListener("click", function() {
+            botonAprobar.addEventListener("click", function () {
                 aprobarRegistro(registro.id);
             });
 
